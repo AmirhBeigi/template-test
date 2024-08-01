@@ -1,20 +1,35 @@
 import React, { useEffect, useMemo, useState } from "react";
 import toast, { ToastPosition, Toaster } from "react-hot-toast";
 
-import { GlobalActionsProvider, GlobalContextMeta } from "@plasmicapp/host";
+import {
+  DataProvider,
+  GlobalActionsProvider,
+  GlobalContextMeta,
+} from "@plasmicapp/host";
 import axios from "axios";
 
 type FragmentProps = React.PropsWithChildren<{
   previewApiConfig: Record<string, any>;
   apiConfig: Record<string, any>;
   rtl: boolean;
+  primaryColor: string;
 }>;
 
 export const Fragment = ({
   children,
   previewApiConfig,
   apiConfig,
+  rtl,
+  primaryColor,
 }: FragmentProps) => {
+  useEffect(() => {
+    changeTheme(primaryColor);
+  }, [primaryColor]);
+
+  const changeTheme = (color: string) => {
+    document.documentElement.style.setProperty("--primary", color);
+  };
+
   const actions = useMemo(
     () => ({
       showToast: (
@@ -68,8 +83,19 @@ export const Fragment = ({
 
   return (
     <GlobalActionsProvider contextName="Fragment" actions={actions}>
-      {children}
-      <Toaster />
+      <DataProvider
+        name="Fragment"
+        data={{
+          apiConfig: apiConfig ?? {},
+          previewApiConfig: previewApiConfig ?? {},
+          rtl,
+          primaryColor,
+        }}
+        hidden
+      >
+        {children}
+        <Toaster />
+      </DataProvider>
     </GlobalActionsProvider>
   );
 };
@@ -93,6 +119,17 @@ export const fragmentMeta: GlobalContextMeta<FragmentProps> = {
       editOnly: true,
       helpText:
         "Read about request configuration options at https://axios-http.com/docs/req_config",
+    },
+    rtl: {
+      displayName: "RTL",
+      type: "boolean",
+      description: `Direction`,
+    },
+    primaryColor: {
+      displayName: "Primary Color",
+      type: "color",
+      defaultValue: "#000000",
+      defaultValueHint: "#000000",
     },
   },
   providesData: true,
